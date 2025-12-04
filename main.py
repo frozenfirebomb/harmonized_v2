@@ -14,7 +14,7 @@ import xlwt
 import xlutils
 from xlutils.copy import copy
 
-from file_paths import invnday_path, po_us_vender_path #, metal_master_path, steel_codes_path, alum_codes_path, copper_codes_path, save_path, report_path
+from file_paths import invnday_path, po_us_vender_path, invnday_save_path #, metal_master_path, steel_codes_path, alum_codes_path, copper_codes_path, save_path, report_path
 from chapter_98 import chapter_98_codes
 
 today = date.today().isoformat() #.replace("-","")
@@ -27,6 +27,9 @@ latest_us_po_vendor = max(list_of_us_po_vendor, key=os.path.getctime)
 
 invnday_wb = open_workbook(latest_invnday)
 invnday_sheet = invnday_wb.sheet_by_index(0)
+
+final_invnday_wb = copy(invnday_wb)
+final_invnday_ws = final_invnday_wb.get_sheet(0)
 
 po_us_vendor_wb = openpyxl.load_workbook(latest_us_po_vendor)
 po_us_vendor_ws = po_us_vendor_wb['Sheet1']
@@ -79,3 +82,8 @@ def main():
             
             else:
                 print("keep the same")
+
+# main()
+print("test: ", latest_invnday)
+final_invnday_save = latest_invnday.split("/")[-1]
+final_invnday_wb.save(f"{invnday_save_path}/final_{final_invnday_save}")
