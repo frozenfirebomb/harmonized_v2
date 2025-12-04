@@ -34,23 +34,40 @@ def acquire_chapter_98(harm_code):
     for key, value in chapter_98_codes.items():
         if re.match(key,harm_code):
             return value
-
-# for row_index in range(invnday_sheet.nrows):
-#     invnday_sku = invnday_sheet.cell(row_index, 3).value
-
-#     for i in range(1, po_us_vendor_ws.max_row + 1):
-#         po_sku = po_us_vendor_ws.cell(row=i, column=12)
-#         if invnday_sku == po_sku.value:
-#             print(invnday_sku)
-#             break
         
-po_date = po_us_vendor_ws.cell(row=12000, column=2)
-char_list = list(str(po_date.value))
-char_list.insert(4, "-")
-char_list.insert(7, "-")
-new_po_date = "".join(char_list)
 
-date_time_po_date = datetime.strptime(new_po_date, "%Y-%m-%d")
-date_time_today = datetime.strptime(today, "%Y-%m-%d")
 
-print(str(date_time_today - date_time_po_date))
+def actual_po_date(po_row):
+    po_date = po_us_vendor_ws.cell(row=po_row, column=2)
+    char_list = list(str(po_date.value))
+    char_list.insert(4, "-"), char_list.insert(7, "-")
+    new_po_date = "".join(char_list)
+
+    date_time_po_date = datetime.strptime(new_po_date, "%Y-%m-%d")
+    date_time_today = datetime.strptime(today, "%Y-%m-%d")
+
+    days_in_3_years = 1095
+
+    if int(str(date_time_today - date_time_po_date).split()[0]) <= days_in_3_years:
+        return True
+    else:
+        return False
+
+for row_index in range(invnday_sheet.nrows):
+    invnday_sku = invnday_sheet.cell(row_index, 3).value
+
+    for po_row in range(1, po_us_vendor_ws.max_row + 1):
+        po_sku = po_us_vendor_ws.cell(row=po_row, column=12).value
+        if invnday_sku == po_sku:
+            valid_for_chapter_98 = actual_po_date(po_row)
+            if valid_for_chapter_98 == True:
+                start_of_chapter_98 = "9801"
+                if invnday_sheet.cell(row_index, 10).value[:4] == start_of_chapter_98:
+                    print("correct sku")
+                else:
+                    print("changed to", acquire_chapter_98(invnday_sheet.cell(row_index, 10).value))
+            elif invnday_sheet.cell(row_index, 10).value[:4] == start_of_chapter_98:
+                print("not valid for chapter 98")
+            break
+    else:
+        print("keep the same")
