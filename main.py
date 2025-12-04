@@ -12,6 +12,7 @@ import xlrd
 from xlrd import open_workbook, cellname
 import xlwt
 import xlutils
+from xlutils.copy import copy
 
 from file_paths import invnday_path, po_us_vender_path #, metal_master_path, steel_codes_path, alum_codes_path, copper_codes_path, save_path, report_path
 from chapter_98 import chapter_98_codes
@@ -53,21 +54,28 @@ def actual_po_date(po_row):
     else:
         return False
 
-for row_index in range(invnday_sheet.nrows):
-    invnday_sku = invnday_sheet.cell(row_index, 3).value
-
-    for po_row in range(1, po_us_vendor_ws.max_row + 1):
-        po_sku = po_us_vendor_ws.cell(row=po_row, column=12).value
-        if invnday_sku == po_sku:
-            valid_for_chapter_98 = actual_po_date(po_row)
-            if valid_for_chapter_98 == True:
-                start_of_chapter_98 = "9801"
-                if invnday_sheet.cell(row_index, 10).value[:4] == start_of_chapter_98:
-                    print("correct sku")
+def main():
+    for row_index in range(invnday_sheet.nrows):
+        invnday_sku = invnday_sheet.cell(row_index, 3).value
+        start_of_chapter_98 = "9801"
+        for po_row in range(1, po_us_vendor_ws.max_row + 1):
+            po_sku = po_us_vendor_ws.cell(row=po_row, column=12).value
+            if invnday_sku == po_sku:
+                valid_for_chapter_98 = actual_po_date(po_row)
+                if valid_for_chapter_98 == True:
+                    
+                    if invnday_sheet.cell(row_index, 10).value[:4] == start_of_chapter_98:
+                        print("correct sku")
+                    else:
+                        print("changed to", acquire_chapter_98(invnday_sheet.cell(row_index, 10).value))
                 else:
-                    print("changed to", acquire_chapter_98(invnday_sheet.cell(row_index, 10).value))
-            elif invnday_sheet.cell(row_index, 10).value[:4] == start_of_chapter_98:
-                print("not valid for chapter 98")
-            break
-    else:
-        print("keep the same")
+                    if invnday_sheet.cell(row_index, 10).value[:4] == start_of_chapter_98:
+                        print("not valid on row: ", row_index + 1)
+                break
+            
+        else:
+            if invnday_sheet.cell(row_index, 10).value[:4] == start_of_chapter_98:
+                print("not valid on row: ", row_index + 1)
+            
+            else:
+                print("keep the same")
