@@ -15,7 +15,7 @@ from xlwt import Workbook
 import xlutils
 from xlutils.copy import copy
 
-from file_paths import invnday_path, po_us_vender_path, steel_codes_path, alum_codes_path, copper_codes_path, invnday_save_path #, metal_master_path, save_path, report_path
+from file_paths import invnday_path, po_us_vender_path, metal_file_paths, invnday_save_path #, metal_master_path, save_path, report_path
 from chapter_98 import chapter_98_codes
 
 today = date.today().isoformat() #.replace("-","")
@@ -44,17 +44,16 @@ def harm_codes(file_path):  # Returns the contents of a text file as a list of s
     return harm_codes 
 
 def metal_declaration_check(row_index):
-    for harm_code in harm_codes(alum_codes_path):
-        value = invnday_sheet.cell(row_index, 10).value
-        if value[:len(harm_code)] == harm_code:
-            print(value, harm_code )
-            print("declaration required")
-            break
-
-metal_declaration_check(42)
+    for metal, file_path in metal_file_paths:
+        for declaration_harm_code in harm_codes(file_path):
+            invnday_harm_code = invnday_sheet.cell(row_index, 10).value
+            if invnday_harm_code[:len(declaration_harm_code)] == declaration_harm_code:
+                print(f"Sku ( {invnday_sheet.cell(row_index, 3).value} ) on row {row_index + 1} needs {metal} declared")
+                break
 
 def acquire_chapter_98(harm_code):
     for key, value in chapter_98_codes.items():
+
         if re.match(key,harm_code):
             return value
         
@@ -100,6 +99,7 @@ def main():
                         tracker += 1
                     else:
                         print("keep the same", row_index + 1)  # declaration function should go here.
+                        metal_declaration_check(row_index)
                         tracker += 1
                 break
             
@@ -110,10 +110,11 @@ def main():
             
             else:
                 print("keep the same", row_index + 1)  # declaration function should go here.
+                metal_declaration_check(row_index)
                 tracker += 1
-    print("tracker: ", tracker)
+    print("tracker should be 497: ", tracker)
 
-# main()
+main()
 
 
 # final_invnday_save = latest_invnday.split("/")[-1]
